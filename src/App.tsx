@@ -33,6 +33,9 @@ function App() {
     xaxis: {
       type: 'categories',
       categories: dateKeys,
+      labels: {
+        show: false
+      }
     },
     yaxis: {
       min: 0,
@@ -42,7 +45,7 @@ function App() {
           if (isRelativeToPop) {
             return `${Math.round(value * 100000) / 10000}%`;
           }
-          return value.toString();
+          return Math.round(value);
         },
       },
     },
