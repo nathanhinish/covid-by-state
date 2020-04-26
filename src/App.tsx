@@ -11,11 +11,15 @@ import {
   Checkbox,
 } from '@material-ui/core';
 
-const initialStates: string[] = [];
+const initialStates: string[] = ['New York', 'Alabama'];
 
 function App() {
   const [states, setStates] = React.useState(initialStates);
   const [isRelativeToPop, setIsRelativeToPop] = React.useState(false);
+  const [
+    useDaysSinceFirstConfirmed,
+    setUseDaysSineFirstConfirmed,
+  ] = React.useState(true);
   const rows: any[] = data.filter((row) => states.includes(row.provinceState));
   const options = {
     colors: [
@@ -32,16 +36,17 @@ function App() {
     ],
     xaxis: {
       type: 'categories',
-      categories: dateKeys,
+      categories: useDaysSinceFirstConfirmed
+        ? dateKeys.map((v, i) => i)
+        : dateKeys,
       labels: {
-        show: false
-      }
+        show: false,
+      },
     },
     yaxis: {
       min: 0,
       labels: {
         formatter: function (value: number) {
-          console.info(isRelativeToPop, value);
           if (isRelativeToPop) {
             return `${Math.round(value * 100000) / 10000}%`;
           }
@@ -55,25 +60,43 @@ function App() {
   };
 
   const series = rows.reduce((acc, row) => {
+    const {
+      confirmedDeltas,
+      lastDayWithNoConfirmed,
+      population,
+      provinceState,
+    } = row;
+
+    let filteredDateKeys = [...dateKeys];
+    let firstDayToIncludeIdx = 0;
+    if (useDaysSinceFirstConfirmed) {
+      firstDayToIncludeIdx = dateKeys.indexOf(lastDayWithNoConfirmed);
+      filteredDateKeys = dateKeys.slice(firstDayToIncludeIdx);
+    }
+
+    const newData = filteredDateKeys.map((v, i) => [
+      i,
+      isRelativeToPop
+        ? confirmedDeltas[i + firstDayToIncludeIdx] / population
+        : confirmedDeltas[i + firstDayToIncludeIdx],
+    ]);
+
+    const cumData = filteredDateKeys.map((v, i) => [
+      i,
+      isRelativeToPop ? row[v] / population : row[v],
+    ]);
+
     return [
       ...acc,
       {
-        name: `${row.provinceState} new cases`,
+        name: `${provinceState} new cases`,
         type: 'bar',
-        data: dateKeys.map((v, i) => [
-          i,
-          isRelativeToPop
-            ? row.confirmedDeltas[i] / row.population
-            : row.confirmedDeltas[i],
-        ]),
+        data: newData,
       },
       {
-        name: `${row.provinceState} cumulative`,
+        name: `${provinceState} cumulative`,
         curve: 'smooth',
-        data: dateKeys.map((v, i) => [
-          i,
-          isRelativeToPop ? row[v] / row.population : row[v],
-        ]),
+        data: cumData,
       },
     ];
   }, []);
@@ -88,6 +111,10 @@ function App() {
   const onCheckboxChange = (
     event: React.ChangeEvent<{ name?: string; checked: boolean }>
   ) => setIsRelativeToPop(event.target.checked as boolean);
+
+  const onDaysSinceCheckboxChange = (
+    event: React.ChangeEvent<{ name?: string; checked: boolean }>
+  ) => setUseDaysSineFirstConfirmed(event.target.checked as boolean);
 
   return (
     <div className="App">
@@ -108,6 +135,17 @@ function App() {
                 />
               }
               label="Scaled to % of state pop"
+            />
+          </FormGroup>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={useDaysSinceFirstConfirmed}
+                  onChange={onDaysSinceCheckboxChange}
+                />
+              }
+              label="Use days since first confirmed"
             />
           </FormGroup>
         </form>
