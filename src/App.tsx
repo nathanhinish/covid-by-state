@@ -165,7 +165,7 @@ function App() {
                 control={
                   <Checkbox
                     checked={showNew}
-                    onChange={(e: any) => setShowNew(e.target.value)}
+                    onChange={(e: any) => setShowNew(e.target.checked)}
                   />
                 }
                 label="Show confirmed per day"
@@ -176,7 +176,7 @@ function App() {
                 control={
                   <Checkbox
                     checked={useDaysSinceFirstConfirmed}
-                    onChange={(e: any) => setShowCum(e.target.value)}
+                    onChange={(e: any) => setShowCum(e.target.checked)}
                   />
                 }
                 label="Show cumulative confirmed"
