@@ -14,6 +14,8 @@ import {
 const initialStates: string[] = ['New York', 'Alabama'];
 
 function App() {
+  const [showCum, setShowCum] = React.useState(true);
+  const [showNew, setShowNew] = React.useState(false);
   const [states, setStates] = React.useState(initialStates);
   const [isRelativeToPop, setIsRelativeToPop] = React.useState(false);
   const [
@@ -48,14 +50,22 @@ function App() {
       labels: {
         formatter: function (value: number) {
           if (isRelativeToPop) {
-            return `${Math.round(value * 100000) / 10000}%`;
+            return `${Math.round(value * 100000) / 1000}%`;
           }
           return Math.round(value);
         },
       },
     },
     stroke: {
-      width: [0, 2],
+      width: states.reduce((acc: number[]) => {
+        if (showNew) {
+          acc.push(0);
+        }
+        if (showCum) {
+          acc.push(2);
+        }
+        return acc;
+      }, []),
     },
   };
 
@@ -74,31 +84,36 @@ function App() {
       filteredDateKeys = dateKeys.slice(firstDayToIncludeIdx);
     }
 
-    const newData = filteredDateKeys.map((v, i) => [
-      i,
-      isRelativeToPop
-        ? confirmedDeltas[i + firstDayToIncludeIdx] / population
-        : confirmedDeltas[i + firstDayToIncludeIdx],
-    ]);
+    const stateSeries = [];
+    if (showNew) {
+      const newData = filteredDateKeys.map((v, i) => [
+        i,
+        isRelativeToPop
+          ? confirmedDeltas[i + firstDayToIncludeIdx] / population
+          : confirmedDeltas[i + firstDayToIncludeIdx],
+      ]);
 
-    const cumData = filteredDateKeys.map((v, i) => [
-      i,
-      isRelativeToPop ? row[v] / population : row[v],
-    ]);
-
-    return [
-      ...acc,
-      {
+      stateSeries.push({
         name: `${provinceState} new cases`,
         type: 'bar',
         data: newData,
-      },
-      {
+      });
+    }
+
+    if (showCum) {
+      const cumData = filteredDateKeys.map((v, i) => [
+        i,
+        isRelativeToPop ? row[v] / population : row[v],
+      ]);
+
+      stateSeries.push({
         name: `${provinceState} cumulative`,
         curve: 'smooth',
         data: cumData,
-      },
-    ];
+      });
+    }
+
+    return [...acc, ...stateSeries];
   }, []);
 
   const onChange = (
@@ -108,14 +123,6 @@ function App() {
     setStates(event.target.value as string[]);
   };
 
-  const onCheckboxChange = (
-    event: React.ChangeEvent<{ name?: string; checked: boolean }>
-  ) => setIsRelativeToPop(event.target.checked as boolean);
-
-  const onDaysSinceCheckboxChange = (
-    event: React.ChangeEvent<{ name?: string; checked: boolean }>
-  ) => setUseDaysSineFirstConfirmed(event.target.checked as boolean);
-
   return (
     <div className="App">
       <header className="App-header">
@@ -123,31 +130,59 @@ function App() {
       </header>
       <main>
         <form noValidate autoComplete="off" className="chart-options">
-          <FormControl className="chart-options-control">
-            <StateSelect value={states} onChange={onChange} />
-          </FormControl>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={isRelativeToPop}
-                  onChange={onCheckboxChange}
-                />
-              }
-              label="Scaled to % of state pop"
-            />
-          </FormGroup>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={useDaysSinceFirstConfirmed}
-                  onChange={onDaysSinceCheckboxChange}
-                />
-              }
-              label="Use days since first confirmed"
-            />
-          </FormGroup>
+          <div className="chart-options-row">
+            <FormControl className="chart-options-control">
+              <StateSelect value={states} onChange={onChange} />
+            </FormControl>
+          </div>
+          <div className="chart-options-row">
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isRelativeToPop}
+                    onChange={(e: any) => setIsRelativeToPop(e.target.checked)}
+                  />
+                }
+                label="Scaled to % of state pop"
+              />
+            </FormGroup>
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useDaysSinceFirstConfirmed}
+                    onChange={(e: any) =>
+                      setUseDaysSineFirstConfirmed(e.target.checked)
+                    }
+                  />
+                }
+                label="Use days since first confirmed"
+              />
+            </FormGroup>
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={showNew}
+                    onChange={(e: any) => setShowNew(e.target.value)}
+                  />
+                }
+                label="Show confirmed per day"
+              />
+            </FormGroup>
+            <FormGroup row>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useDaysSinceFirstConfirmed}
+                    onChange={(e: any) => setShowCum(e.target.value)}
+                  />
+                }
+                label="Show cumulative confirmed"
+              />
+            </FormGroup>
+          </div>
         </form>
         <Chart height={400} type="line" options={options} series={series} />
       </main>
