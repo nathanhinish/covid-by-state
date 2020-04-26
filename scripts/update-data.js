@@ -5,6 +5,8 @@ const csv = require('csvtojson');
 const { sortBy } = require('lodash');
 const { isBefore } = require('compare-dates');
 
+const populations = require('../data/populations.json');
+
 const DATA_DIR = path.resolve(__dirname, '../data');
 const COVID_GIT_REPO = 'https://github.com/CSSEGISandData/COVID-19.git';
 const REPO_LOCAL_DIR = path.resolve(DATA_DIR, 'covid_data');
@@ -63,20 +65,43 @@ async function joinDataByState(rows) {
     if (IGNORE_PS_VALUES.includes(ps)) {
       return;
     }
-    const stateData = cumStateData[ps] || {};
-    stateData['Province_State'] = ps;
+    const stateData = cumStateData[ps] || {
+      provinceState: ps,
+      population: populations[ps],
+      lastDayWithNoConfirmed: '1/21/20',
+      confirmedDeltas: [],
+    };
 
     dateKeys.forEach((key) => {
       const existing = stateData[key] || 0;
-      stateData[key] = parseInt(row[key], 10) + existing;
+      const newConfirmed = parseInt(row[key], 10);
+      stateData[key] = newConfirmed + existing;
     });
-
     cumStateData[ps] = stateData;
   });
 
-  return Object.keys(cumStateData)
+  const newRows = Object.keys(cumStateData)
     .sort()
     .map((key) => cumStateData[key]);
+
+  newRows.forEach((row) => {
+    dateKeys.forEach((key, i) => {
+      const confirmed = row[key];
+      if (confirmed === 0) {
+        row.lastDayWithNoConfirmed = key;
+      }
+      if (i === 0) {
+        row.confirmedDeltas.push(confirmed);
+      } else {
+        const lastConfirmed = row[dateKeys[i-1]];
+        row.confirmedDeltas.push(confirmed - lastConfirmed);
+      }
+    });
+  });
+  return {
+    dateKeys,
+    data: newRows
+  };
 }
 
 async function generateCustomRows(rows) {
@@ -118,7 +143,7 @@ async function processConfirmed() {
   });
 
   dateKeys = Object.keys(rows[0])
-    .filter((key) => /(\d{1,2})\/\d{1,2}\/\d{2}/.test(key))
+    .filter((key) => DATE_KEY_TEST.test(key))
     .sort((a, b) => {
       const aD = new Date(Date.parse(a));
       const bD = new Date(Date.parse(b));
@@ -127,7 +152,7 @@ async function processConfirmed() {
 
   const byState = await joinDataByState(rows);
   await fs.writeJSON(
-    path.resolve(DATA_DIR, 'confirmed_by_state.json'),
+    path.resolve(__dirname, '../src/confirmed_by_state.json'),
     byState,
     {
       spaces: 2,
