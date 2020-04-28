@@ -6,11 +6,11 @@ const defaultState: StoreState = {
     dateKeys,
     data: data as StateData[],
   },
-  includedStates: ['Alabama', 'Georgia'],
+  includedStates: ['Washington'],
   popScaled: true,
-  firstConfirmedShift: false,
-  showPerDay: true,
-  showCumulative: false,
+  firstConfirmedShift: true,
+  showPerDay: false,
+  showCumulative: true,
   ...JSON.parse(sessionStorage.getItem('state') || '{}')
 };
 
