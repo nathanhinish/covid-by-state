@@ -26,7 +26,9 @@ export function getSharedOptions({
           ? '# Days since first confirmed case'
           : 'Date',
       },
-
+      axisTicks: {
+        show: false
+      },
       labels: {
         hideOverlappingLabels: true,
         rotate: 0,
