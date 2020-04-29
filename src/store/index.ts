@@ -1,27 +1,36 @@
+/* globals __REDUX_DEVTOOLS_EXTENSION__ */
 import { createStore } from 'redux';
 import { dateKeys, data } from '../confirmed_by_state.json';
 
-const defaultState: StoreState = {
-  dataset: {
-    dateKeys,
-    data: data as StateData[],
-  },
-  includedStates: ['Washington'],
-  popScaled: true,
-  firstConfirmedShift: true,
-  showPerDay: false,
-  showCumulative: true,
-  ...JSON.parse(sessionStorage.getItem('state') || '{}')
+declare global {
+  interface Window {
+    __REDUX_DEVTOOLS_EXTENSION__: any
+  }
+}
+
+const getDefaultState = (skipSession: boolean = false): StoreState => {
+  return {
+    dataset: {
+      dateKeys,
+      data: data as StateData[],
+    },
+    includedStates: ['Washington', 'District of Columbia'],
+    popScaled: true,
+    firstConfirmedShift: false,
+    showPerDay: true,
+    showCumulative: false,
+    ...(!skipSession
+      ? JSON.parse(sessionStorage.getItem('state') || '{}')
+      : {}),
+  };
 };
 
 function root(state: StoreState | undefined, action: StoreAction): StoreState {
   if (typeof state === 'undefined') {
-    return {
-      ...defaultState,
-    };
+    return getDefaultState();
   }
 
-  const newState: StoreState = {
+  let newState: StoreState = {
     ...state,
     includedStates: [...state.includedStates],
   };
@@ -42,14 +51,21 @@ function root(state: StoreState | undefined, action: StoreAction): StoreState {
     case 'setShowCumulative':
       newState.showCumulative = action.payload as boolean;
       break;
+    case 'resetApp':
+      newState = getDefaultState(true);
+      break;
   }
 
   return newState;
 }
 
-const store = createStore(root);
+const store = createStore(
+  root,
+  getDefaultState(),
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
 
-store.subscribe((...rest: any) => {
+store.subscribe(() => {
   const {
     includedStates,
     popScaled,

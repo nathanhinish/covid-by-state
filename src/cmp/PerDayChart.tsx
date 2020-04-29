@@ -1,43 +1,25 @@
 import React from 'react';
 import ApexChart from 'react-apexcharts';
 import { useSelector } from 'react-redux';
-import SeriesColors from './SeriesColors';
+import { getSharedOptions } from './chartFns';
 
 export const PerDayChart = () => {
+  const state = useSelector((state) => state) as StoreState;
   const {
     includedStates,
     firstConfirmedShift,
     popScaled,
-    showCumulative,
     dataset: { data, dateKeys },
-  } = useSelector((state) => state) as StoreState;
+  } = state;
 
   const options = {
-    theme: {
-      mode: 'dark',
-    },
-    colors: SeriesColors,
-    xaxis: {
-      type: 'categories',
-      categories: firstConfirmedShift ? dateKeys.map((v, i) => i) : dateKeys,
-      labels: {
-        show: false,
-      },
-    },
-    yaxis: {
-      min: 0,
-      labels: {
-        formatter: popScaled
-          ? (value: number) => `${Math.round(value * 100000) / 1000}%`
-          : (value: number) => Math.round(value),
-      },
+    ...getSharedOptions(state),
+    title: {
+      text: 'Confirmed cases per day',
     },
     stroke: {
       width: 3,
-    },
-    dataLabels: {
-      enabled: false,
-    },
+    }
   };
 
   const buildSeries = ({
@@ -60,22 +42,24 @@ export const PerDayChart = () => {
       }
     }
 
-    return {
-      name: provinceState,
-      curve: 'smooth',
-      data,
-    };
+    return [
+      {
+        name: provinceState,
+        type: 'bar',
+        data,
+      },
+    ];
   };
 
-  const seriesSet = includedStates.map((name: string) => {
+  const seriesSet = includedStates.reduce((acc: any[], name: string) => {
     const match = data.find((d) => d.provinceState === name);
-    return buildSeries(match as StateData);
-  });
+    const newSeries = buildSeries(match as StateData);
+    return [...acc, ...newSeries];
+  }, []);
 
   return (
     <ApexChart
-      height={showCumulative ? '45%' : '95%'}
-      type="bar"
+      height={500}
       options={options}
       series={seriesSet}
     />

@@ -1,40 +1,24 @@
 import React from 'react';
 import ApexChart from 'react-apexcharts';
 import { useSelector } from 'react-redux';
-import SeriesColors from './SeriesColors';
+import { getSharedOptions } from './chartFns';
 
 export const CumulativeChart = () => {
+  const state = useSelector((state) => state) as StoreState;
   const {
     includedStates,
     firstConfirmedShift,
     popScaled,
-    showPerDay,
     dataset: { data, dateKeys },
-  } = useSelector((state) => state) as StoreState;
-
+  } = state;
   const options = {
-    theme: {
-      mode: 'dark'
-    },
-    colors: SeriesColors,
-    xaxis: {
-      type: 'categories',
-      categories: firstConfirmedShift ? dateKeys.map((v, i) => i) : dateKeys,
-      labels: {
-        show: false,
-      },
-    },
-    yaxis: {
-      min: 0,
-      labels: {
-        formatter: popScaled
-          ? (value: number) => `${Math.round(value * 100000) / 1000}%`
-          : (value: number) => Math.round(value),
-      },
+    ...getSharedOptions(state),
+    title: {
+      text: 'Cumulative confirmed cases',
     },
     stroke: {
       width: 2,
-    },
+    }
   };
 
   const buildSeries = ({
@@ -73,7 +57,7 @@ export const CumulativeChart = () => {
 
   return (
     <ApexChart
-      height={showPerDay ? '45%' : '95%'}
+      height={500}
       type="line"
       options={options}
       series={seriesSet}
