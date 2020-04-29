@@ -18,7 +18,7 @@ export const PerDayChart = () => {
       text: 'Confirmed cases per day',
     },
     stroke: {
-      width: 3,
+      width: 2,
     }
   };
 
