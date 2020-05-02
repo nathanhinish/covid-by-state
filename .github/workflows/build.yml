@@ -28,6 +28,7 @@ jobs:
     - name: Build
       run: |
         yarn
+        yarn update-data
         yarn build
         rm -rf docs
         cp -R build docs
