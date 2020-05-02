@@ -1,5 +1,5 @@
 type StateData = {
-  provinceState: string;
+  location: string;
   population: number;
   lastDayWithNoConfirmed: string;
   confirmedDeltas: number[];

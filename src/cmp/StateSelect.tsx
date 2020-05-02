@@ -40,8 +40,8 @@ export const StateSelect = () => {
       }
     >
       {data.map((row) => (
-        <MenuItem key={`mi-${row.provinceState}`} value={row.provinceState}>
-          {row.provinceState}
+        <MenuItem key={`mi-${row.location}`} value={row.location}>
+          {row.location}
         </MenuItem>
       ))}
     </Select>

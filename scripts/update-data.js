@@ -2,7 +2,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const fs = require('fs-extra');
 const csv = require('csvtojson');
-const { sortBy } = require('lodash');
+const { sortBy, sumBy } = require('lodash');
 const { isBefore } = require('compare-dates');
 
 const populations = require('../data/populations.json');
@@ -60,13 +60,14 @@ async function updateRepo() {
 
 async function joinDataByState(rows) {
   const cumStateData = {};
+
   rows.forEach((row) => {
     const ps = row['Province_State'];
     if (IGNORE_PS_VALUES.includes(ps)) {
       return;
     }
     const stateData = cumStateData[ps] || {
-      provinceState: ps,
+      location: ps,
       population: populations[ps],
       lastDayWithNoConfirmed: '1/21/20',
       confirmedDeltas: [],
@@ -93,46 +94,44 @@ async function joinDataByState(rows) {
       if (i === 0) {
         row.confirmedDeltas.push(confirmed);
       } else {
-        const lastConfirmed = row[dateKeys[i-1]];
+        const lastConfirmed = row[dateKeys[i - 1]];
+        if (lastConfirmed > confirmed) {
+          // console.info(row.Admin2, row.location, dateKeys[i])
+          // throw new Error('this should not happen')
+        }
         row.confirmedDeltas.push(confirmed - lastConfirmed);
       }
     });
   });
   return {
     dateKeys,
-    data: newRows
+    data: newRows,
   };
 }
 
-async function generateCustomRows(rows) {
-  const data = sortBy(rows, 'Province_State').reduce((acc, row) => {
-    const ps = row['Province_State'];
-    const confirmedByDate = [];
-    const cumulativeByDate = [];
-    let lastZeroDate = dateKeys[0];
-    let firstConfirmedDate = null;
-    let totalConfirmed = 0;
-    dateKeys.forEach((key) => {
-      const confirmedOnDate = parseInt(row[key], 10);
-      confirmedByDate.push(confirmedOnDate);
-      totalConfirmed = totalConfirmed + confirmedOnDate;
-      cumulativeByDate.push(totalConfirmed);
-    });
+async function withNationalRow(byState) {
+  const rows = byState.data;
+  const national = {
+    location: 'United States',
+    lastDayWithNoConfirmed: '1/21/20',
+    population: sumBy(rows, 'population'),
+  };
 
-    acc[ps] = {
-      provinceState: ps,
-      lastZeroDate,
-      firstConfirmedDate,
-      totalConfirmed,
-      confirmedByDate,
-      cumulativeByDate,
-    };
-    return acc;
-  }, {});
+  if (rows.length > 0) {
+    national.confirmedDeltas = rows.reduce(
+      (acc, row) => row.confirmedDeltas.map((v, i) => v + (acc[i] || 0)),
+      []
+    );
+  }
 
-  await fs.writeJSON(path.resolve(DATA_DIR, 'confirmed.json'), data, {
-    spaces: 2,
+  byState.dateKeys.forEach((key) => {
+    national[key] = sumBy(rows, key);
   });
+
+  return {
+    ...byState,
+    data: [national, ...byState.data],
+  };
 }
 
 async function processConfirmed() {
@@ -151,9 +150,10 @@ async function processConfirmed() {
     });
 
   const byState = await joinDataByState(rows);
+  const data = await withNationalRow(byState);
   await fs.writeJSON(
     path.resolve(__dirname, '../src/confirmed_by_state.json'),
-    byState,
+    data,
     {
       spaces: 2,
     }
@@ -169,8 +169,6 @@ async function main() {
     console.info('Cloning data repo');
     await cloneRepo();
   }
-
-  // const files = await getDataFiles();
   await processConfirmed();
 }
 

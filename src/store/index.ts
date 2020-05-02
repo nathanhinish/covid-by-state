@@ -14,7 +14,7 @@ const getDefaultState = (skipSession: boolean = false): StoreState => {
       dateKeys,
       data: data as StateData[],
     },
-    includedStates: ['Washington', 'District of Columbia'],
+    includedStates: ['United States', 'Washington', 'District of Columbia'],
     popScaled: true,
     firstConfirmedShift: false,
     showPerDay: true,

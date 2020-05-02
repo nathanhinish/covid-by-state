@@ -22,7 +22,7 @@ export const CumulativeChart = () => {
   };
 
   const buildSeries = ({
-    provinceState,
+    location,
     population,
     lastDayWithNoConfirmed,
     confirmedDeltas,
@@ -44,14 +44,14 @@ export const CumulativeChart = () => {
     }
 
     return {
-      name: provinceState,
+      name: location,
       curve: 'smooth',
       data,
     };
   };
 
   const seriesSet = includedStates.map((name: string) => {
-    const match = data.find((d) => d.provinceState === name);
+    const match = data.find((d) => d.location === name);
     return buildSeries(match as StateData);
   });
 

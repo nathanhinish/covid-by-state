@@ -23,7 +23,7 @@ export const PerDayChart = () => {
   };
 
   const buildSeries = ({
-    provinceState,
+    location,
     population,
     lastDayWithNoConfirmed,
     confirmedDeltas,
@@ -44,7 +44,7 @@ export const PerDayChart = () => {
 
     return [
       {
-        name: provinceState,
+        name: location,
         type: 'bar',
         data,
       },
@@ -52,7 +52,7 @@ export const PerDayChart = () => {
   };
 
   const seriesSet = includedStates.reduce((acc: any[], name: string) => {
-    const match = data.find((d) => d.provinceState === name);
+    const match = data.find((d) => d.location === name);
     const newSeries = buildSeries(match as StateData);
     return [...acc, ...newSeries];
   }, []);
