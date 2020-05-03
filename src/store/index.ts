@@ -20,7 +20,7 @@ const getDefaultState = (skipSession: boolean = false): StoreState => {
     showPerDay: true,
     showCumulative: false,
     ...(!skipSession
-      ? JSON.parse(sessionStorage.getItem('state') || '{}')
+      ? JSON.parse(localStorage.getItem('state') || '{}')
       : {}),
   };
 };
@@ -73,7 +73,7 @@ store.subscribe(() => {
     showPerDay,
     showCumulative,
   } = store.getState();
-  sessionStorage.setItem(
+  localStorage.setItem(
     'state',
     JSON.stringify({
       includedStates,
