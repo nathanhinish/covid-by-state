@@ -5,6 +5,7 @@
   "homepage": "https://n8d.io/covid-by-state",
   "dependencies": {
     "@material-ui/core": "^4.9.11",
+    "@material-ui/icons": "^4.9.1",
     "@reduxjs/toolkit": "^1.3.5",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -34,7 +35,8 @@
     "typescript": "~3.7.2"
   },
   "resolutions": {
-    "minimist": "1.2.5"
+    "minimist": "1.2.5",
+    "yargs-parser": "18.1.3"
   },
   "scripts": {
     "start": "react-scripts start",
