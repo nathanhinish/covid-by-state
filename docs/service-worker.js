@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/covid-by-state/precache-manifest.b1636aeee12821f6824b98e5702748cb.js"
+  "/covid-by-state/precache-manifest.cc64ef3f90cb8a7e21322004f9de07ab.js"
 );
 
 self.addEventListener('message', (event) => {
